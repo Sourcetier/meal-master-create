@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Search, Store, ChevronLeft, MapPin, Clock, Star } from 'lucide-react';
 import { Button } from './ui/button';
@@ -30,6 +29,7 @@ interface RestaurantMenuStepProps {
   onMenuSelect: (menu: Menu) => void;
   onNext: () => void;
   onPrev: () => void;
+  hasCartItems?: boolean;
 }
 
 const RestaurantMenuStep = ({
@@ -38,7 +38,8 @@ const RestaurantMenuStep = ({
   onRestaurantSelect,
   onMenuSelect,
   onNext,
-  onPrev
+  onPrev,
+  hasCartItems = false
 }: RestaurantMenuStepProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -156,6 +157,13 @@ const RestaurantMenuStep = ({
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Restaurant & Menu</h2>
             <p className="text-gray-600">Choose your preferred restaurant and menu</p>
+            {hasCartItems && (
+              <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> You have items in your cart. Changing restaurant will clear your current order.
+                </p>
+              </div>
+            )}
           </div>
 
           {!selectedRestaurant ? (
@@ -182,7 +190,9 @@ const RestaurantMenuStep = ({
                     <Card
                       key={restaurant.id}
                       onClick={() => handleRestaurantSelect(restaurant)}
-                      className="cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-gray-200 hover:border-purple-300"
+                      className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 border-gray-200 hover:border-purple-300 ${
+                        hasCartItems ? 'ring-2 ring-amber-300' : ''
+                      }`}
                     >
                       <div className="aspect-video relative overflow-hidden rounded-t-lg">
                         <img
@@ -229,6 +239,7 @@ const RestaurantMenuStep = ({
                   variant="ghost"
                   onClick={() => onRestaurantSelect(null)}
                   className="mr-4"
+                  disabled={hasCartItems}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Back to Restaurants
@@ -244,6 +255,13 @@ const RestaurantMenuStep = ({
                     <p className="text-purple-600 text-sm">{selectedRestaurant.cuisine}</p>
                   </div>
                 </div>
+                {hasCartItems && (
+                  <div className="ml-auto">
+                    <Badge className="bg-green-100 text-green-800">
+                      Restaurant Locked
+                    </Badge>
+                  </div>
+                )}
               </div>
 
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Select Menu</h3>

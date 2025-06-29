@@ -5,9 +5,12 @@ import RestaurantMenuStep from '../components/RestaurantMenuStep';
 import OrderSelectionStep from '../components/OrderSelectionStep';
 import PaymentDeliveryStep from '../components/PaymentDeliveryStep';
 import StepIndicator from '../components/StepIndicator';
+import RestaurantChangeDialog from '../components/RestaurantChangeDialog';
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showRestaurantChangeDialog, setShowRestaurantChangeDialog] = useState(false);
+  const [pendingRestaurant, setPendingRestaurant] = useState(null);
   const [orderData, setOrderData] = useState({
     customer: null,
     restaurant: null,
@@ -30,6 +33,47 @@ const Index = () => {
     setOrderData(prev => ({ ...prev, ...data }));
   };
 
+  const handleCustomerSelect = (customer) => {
+    // If changing customer and cart has items, clear the cart
+    if (orderData.cart.length > 0 && orderData.customer?.id !== customer?.id) {
+      updateOrderData({ 
+        customer, 
+        cart: [], 
+        restaurant: null, 
+        menu: null 
+      });
+    } else {
+      updateOrderData({ customer });
+    }
+  };
+
+  const handleRestaurantSelect = (restaurant) => {
+    // If there are items in cart and trying to change restaurant
+    if (orderData.cart.length > 0 && orderData.restaurant?.id !== restaurant?.id) {
+      setPendingRestaurant(restaurant);
+      setShowRestaurantChangeDialog(true);
+      return;
+    }
+    
+    // If no items in cart or same restaurant, proceed normally
+    updateOrderData({ restaurant, menu: null });
+  };
+
+  const confirmRestaurantChange = () => {
+    updateOrderData({ 
+      restaurant: pendingRestaurant, 
+      menu: null, 
+      cart: [] 
+    });
+    setShowRestaurantChangeDialog(false);
+    setPendingRestaurant(null);
+  };
+
+  const cancelRestaurantChange = () => {
+    setShowRestaurantChangeDialog(false);
+    setPendingRestaurant(null);
+  };
+
   const nextStep = () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
@@ -48,7 +92,7 @@ const Index = () => {
         return (
           <CustomerSearchStep
             selectedCustomer={orderData.customer}
-            onCustomerSelect={(customer) => updateOrderData({ customer })}
+            onCustomerSelect={handleCustomerSelect}
             onNext={nextStep}
           />
         );
@@ -57,10 +101,11 @@ const Index = () => {
           <RestaurantMenuStep
             selectedRestaurant={orderData.restaurant}
             selectedMenu={orderData.menu}
-            onRestaurantSelect={(restaurant) => updateOrderData({ restaurant })}
+            onRestaurantSelect={handleRestaurantSelect}
             onMenuSelect={(menu) => updateOrderData({ menu })}
             onNext={nextStep}
             onPrev={prevStep}
+            hasCartItems={orderData.cart.length > 0}
           />
         );
       case 3:
@@ -102,6 +147,14 @@ const Index = () => {
           {renderCurrentStep()}
         </div>
       </div>
+
+      <RestaurantChangeDialog
+        isOpen={showRestaurantChangeDialog}
+        onConfirm={confirmRestaurantChange}
+        onCancel={cancelRestaurantChange}
+        restaurantName={pendingRestaurant?.name || ''}
+        itemCount={orderData.cart.length}
+      />
     </div>
   );
 };
